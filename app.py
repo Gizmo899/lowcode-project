@@ -1,52 +1,38 @@
-import re
-from urllib.parse import urlparse
-from flask import Flask, render_template, request
+from flask import Flask
 
 app = Flask(__name__)
 
-# Basic RFC 5322-compliant regex for validating email format
-EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
-def validate_contact_form(name, email, message):
-    errors = {}
+@app.route("/")
+def index():
+    return """<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Hello from Fabio</title>
+  </head>
+  <body>
+    <h1>Hello from Fabio</h1>
+  </body>
+</html>"""
 
-    if not name or not name.strip():
-        errors["name"] = "Name is required."
 
-    if not email or not email.strip():
-        errors["email"] = "Email address is required."
-    elif not EMAIL_REGEX.match(email.strip()):
-        errors["email"] = "Please enter a valid email address."
+@app.route("/about")
+def about():
+    return """<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>About - Cost of Living Comparator</title>
+  </head>
+  <body>
+    <h1>About</h1>
+    <p>Cost of Living Comparator is a web application designed to help individuals, students, job seekers, and professionals compare living expenses across different cities and countries. Users can select two locations and instantly view side-by-side comparisons of key cost categories such as housing, transportation, groceries, utilities, dining, healthcare, and entertainment.</p>
+    <p>The platform provides clear visual insights into how far a salary can go in each location, helping users make informed decisions about relocation, travel, study, or career opportunities. By integrating real-world cost data and customizable spending profiles, users can estimate monthly budgets based on their lifestyle and financial goals.</p>
+    <p>Additional features include salary equivalence calculations, affordability scores, and personalized savings projections. Whether someone is planning an international move, evaluating a job offer, or simply exploring new destinations, the Cost of Living Comparator transforms complex financial information into an intuitive and actionable experience, enabling smarter decisions with confidence and transparency.</p>
+  </body>
+</html>"""
 
-    if not message or not message.strip():
-        errors["message"] = "Message cannot be empty."
-
-    return errors
-
-@app.route("/contact", methods=["GET", "POST"])
-def contact():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip()
-        message = request.form.get("message", "").strip()
-
-        errors = validate_contact_form(name, email, message)
-
-        if errors:
-            # Re-render with user input preserved and HTTP 400 Bad Request status
-            return (
-                render_template(
-                    "contact.html",
-                    errors=errors,
-                    values={"name": name, "email": email, "message": message},
-                ),
-                400,
-            )
-
-        # Process form submission (e.g., send email, log, or store in DB)
-        return render_template("contact.html", success=True, name=name)
-
-    return render_template("contact.html", errors={}, values={})
 
 if __name__ == "__main__":
     app.run(debug=True)
