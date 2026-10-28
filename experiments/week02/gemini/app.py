@@ -1,45 +1,49 @@
-import re
 from flask import Flask, render_template, request
+import re
 
 app = Flask(__name__)
+app.secret_key = 'super_secret_key_for_flash' # Required for session management if needed later
 
-# Standard library regex for basic email validation
-EMAIL_REGEX = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
+# Standard regex pattern for validating email format
+EMAIL_REGEX = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    error = None
+    success = None
+    name = ''
+    email = ''
+    message = ''
+
     if request.method == 'POST':
-        # Retrieve and sanitize input data
+        # Retrieve form fields and strip whitespace
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip()
         message = request.form.get('message', '').strip()
-        
-        errors = []
-        
-        # Server-side validation
+
+        # 1. Server-side check for empty fields
+        missing_fields = []
         if not name:
-            errors.append("Name is required.")
+            missing_fields.append('Name')
         if not email:
-            errors.append("Email is required.")
-        elif not EMAIL_REGEX.match(email):
-            errors.append("Please enter a valid email address.")
+            missing_fields.append('Email')
         if not message:
-            errors.append("Message is required.")
-            
-        if errors:
-            # Re-render form with error message(s), preserve user input, and return HTTP 400
-            return render_template(
-                'contact.html',
-                error=" ".join(errors),
-                name=name,
-                email=email,
-                message=message
-            ), 400
-            
-        # On success, render confirmation page
-        return render_template('success.html', name=name)
+            missing_fields.append('Message')
+
+        if missing_fields:
+            error = f"The following required field(s) are missing: {', '.join(missing_fields)}."
         
-    return render_template('contact.html')
+        # 2. Server-side check for valid email format (only if email isn't already empty)
+        elif not re.match(EMAIL_REGEX, email):
+            error = "Invalid email format. Please enter a valid email address (e.g., user@example.com)."
+        
+        # 3. Success state
+        else:
+            success = f"Thank you, {name}! Your message has been sent successfully."
+            # Clear fields after successful submission
+            name, email, message = '', '', ''
+
+    return render_template('contact.html', error=error, success=success, name=name, email=email, message=message)
 
 if __name__ == '__main__':
     app.run(debug=True)
