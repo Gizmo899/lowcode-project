@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        input.has-error, textarea.has-error {
+            border-color: #d9534f;
+            background-color: #fdf7f7;
+        }
+        .error-message {
+            color: #d9534f;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .success-box {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0052a3;
+        }
+    </style>
+</head>
+<body>
+
+    {% if success %}
+        <div class="success-box">
+            <h2>Thank you, {{ name }}!</h2>
+            <p>Your message has been received. We will get back to you shortly.</p>
+            <a href="{{ url_for('contact') }}">Send another message</a>
+        </div>
+    {% else %}
+        <h1>Contact Us</h1>
+
+        <form method="POST" action="{{ url_for('contact') }}" novalidate>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    value="{{ values.name|default('') }}" 
+                    class="{% if errors.name %}has-error{% endif %}"
+                >
+                {% if errors.name %}
+                    <div class="error-message">{{ errors.name }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    value="{{ values.email|default('') }}" 
+                    class="{% if errors.email %}has-error{% endif %}"
+                >
+                {% if errors.email %}
+                    <div class="error-message">{{ errors.email }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea 
+                    id="message" 
+                    name="message" 
+                    rows="5" 
+                    class="{% if errors.message %}has-error{% endif %}"
+                >{{ values.message|default('') }}</textarea>
+                {% if errors.message %}
+                    <div class="error-message">{{ errors.message }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    {% endif %}
+
+</body>
+</html>

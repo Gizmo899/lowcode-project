@@ -1,0 +1,3 @@
+write a web appllication with flask. 
+A contact form that is rendered at /contact. I want fields for name, email and message.  The app has to validate whether the email address is a valid format.  Validation has to be done service aside.  If any field is empty I want the app to reject it and return an error message as to what is missing.  If it is successful, then display a confirmation message. 
+No need to store data at the moment.
