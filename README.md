@@ -26,6 +26,9 @@ Then open <http://127.0.0.1:5000/> in your browser. Press `Ctrl+C` to stop.
 - If port 5000 is taken, change the last line of `app.py` to `app.run(debug=True, port=5001)`.
 # lowcode-project
 
+
+## PROJECT IDEA - Cost of living comparator app
+
 What would you build if it took an evening instead of a quarter?
 
 Cost of Living Comparator is a web application designed to help individuals, students, job seekers, and professionals compare living expenses across different cities and countries. Users can select two locations and instantly view side-by-side comparisons of key cost categories such as housing, transportation, groceries, utilities, dining, healthcare, and entertainment.
@@ -33,3 +36,10 @@ Cost of Living Comparator is a web application designed to help individuals, stu
 The platform provides clear visual insights into how far a salary can go in each location, helping users make informed decisions about relocation, travel, study, or career opportunities. By integrating real-world cost data and customizable spending profiles, users can estimate monthly budgets based on their lifestyle and financial goals.
 
 Additional features include salary equivalence calculations, affordability scores, and personalized savings projections. Whether someone is planning an international move, evaluating a job offer, or simply exploring new destinations, the Cost of Living Comparator transforms complex financial information into an intuitive and actionable experience, enabling smarter decisions with confidence and transparency.
+
+## SESSION 2 - ADD A CONTACT FORM
+
+Prompt
+Write a web appllication with flask. 
+A contact form that is rendered at /contact. I want fields for name, email and message.  The app has to validate whether the email address is a valid format.  Validation has to be done service aside.  If any field is empty I want the app to reject it and return an error message as to what is missing.  If it is successful, then display a confirmation message. 
+No need to store data at the moment.
