@@ -1,37 +1,57 @@
-from flask import Flask
+import re
+
+from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
+
+# Pragmatic email check: something@domain.tld, no spaces, one "@".
+# For stricter validation (e.g. DNS checks), swap in the `email-validator` package.
+EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$")
+
+FIELDS = ("name", "email", "message")
+
+
+def validate_contact(form):
+    """Validate submitted form data on the server.
+
+    Returns (cleaned_values, errors), where errors maps a field name
+    to a human-readable message.
+    """
+    values = {field: (form.get(field) or "").strip() for field in FIELDS}
+    errors = {}
+
+    if not values["name"]:
+        errors["name"] = "Enter your name."
+
+    if not values["email"]:
+        errors["email"] = "Enter your email address."
+    elif len(values["email"]) > 254 or not EMAIL_RE.match(values["email"]):
+        errors["email"] = "Enter a valid email address, like name@example.com."
+
+    if not values["message"]:
+        errors["message"] = "Enter a message."
+
+    return values, errors
 
 
 @app.route("/")
 def index():
-    return """<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Hello from Fabio</title>
-  </head>
-  <body>
-    <h1>Hello from Fabio</h1>
-  </body>
-</html>"""
+    return redirect(url_for("contact"))
 
 
-@app.route("/about")
-def about():
-    return """<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>About - Cost of Living Comparator</title>
-  </head>
-  <body>
-    <h1>About</h1>
-    <p>Cost of Living Comparator is a web application designed to help individuals, students, job seekers, and professionals compare living expenses across different cities and countries. Users can select two locations and instantly view side-by-side comparisons of key cost categories such as housing, transportation, groceries, utilities, dining, healthcare, and entertainment.</p>
-    <p>The platform provides clear visual insights into how far a salary can go in each location, helping users make informed decisions about relocation, travel, study, or career opportunities. By integrating real-world cost data and customizable spending profiles, users can estimate monthly budgets based on their lifestyle and financial goals.</p>
-    <p>Additional features include salary equivalence calculations, affordability scores, and personalized savings projections. Whether someone is planning an international move, evaluating a job offer, or simply exploring new destinations, the Cost of Living Comparator transforms complex financial information into an intuitive and actionable experience, enabling smarter decisions with confidence and transparency.</p>
-  </body>
-</html>"""
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "GET":
+        return render_template("contact.html", values={}, errors={}, success=False)
+
+    values, errors = validate_contact(request.form)
+
+    if errors:
+        # 400 so API clients and tests can tell the submission was rejected.
+        return render_template("contact.html", values=values, errors=errors, success=False), 400
+
+    # Nothing is stored yet. This is where you'd save to a DB or send an email.
+    return render_template("contact.html", values={}, errors={}, success=True, name=values["name"])
 
 
 if __name__ == "__main__":
