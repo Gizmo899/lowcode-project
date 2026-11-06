@@ -1,0 +1,39 @@
+# Week 3 — AI Code Review
+
+Reviewed by: Perplexity Computer (GLM-5.3) Date: 06 November 2026
+
+Subject: `next-hire-poc/job-tracker` — Flask app-factory app with 4 blueprints (auth, jobseeker, adviser, admin), SQLAlchemy, Flask-Login, Flask-WTF CSRF, APScheduler background jobs. All 7 tests in `tests/test_app.py` pass. No code was changed as part of this review.
+
+## Findings
+
+| # | File:line | What it says is wrong | Is it real? | Action |
+|---|---|---|---|---|
+| 1 | app/__init__.py:22 | `SECRET_KEY` falls back to hardcoded `"dev-only-change-me-before-deployment"` when the env var is missing | yes — if deployed without `SECRET_KEY`, anyone can forge session cookies | leave for PoC; fail loudly in production instead of defaulting |
+| 2 | app/__init__.py:121–125, app/seed.py:38–42 | `AUTO_INIT_DB` defaults to `true` and seeds known-credential accounts (`admin@example.com` / `admin123`, etc.) | yes — every deployment without explicit env config boots with a working admin login | leave for demo; default should be `false` |
+| 3 | app/__init__.py:127–131 | Scheduler start condition is wrong: under plain `flask run` (no `--debug`) `FLASK_RUN_FROM_CLI=true` blocks the first clause and `WERKZEUG_RUN_MAIN` is unset, so the scheduler never starts — verified empirically | yes — digests and nudges silently never run via the documented entrypoint; conversely under gunicorn (neither var set) every worker starts its own scheduler | fix — use an explicit `START_SCHEDULER` env decision, not werkzeug-internals sniffing |
+| 4 | app/automations.py:47–77 | Nudge job is check-then-act: `nudge_sent_at.is_(None)` filter, then set — with multiple scheduler instances (see #3) two workers can both pass the filter and create duplicate notifications | yes in the multi-worker case; harmless single-process | fix alongside #3 (worker lock or DB constraint) |
+| 5 | run.py:10 | `debug=True` enables the Werkzeug interactive debugger (code execution from the browser) | yes, but mitigated — bound to `127.0.0.1` and flagged "local PoC use only" | leave for PoC; must be off in any shared environment |
+| 6 | app/auth/routes.py:28–29, 42 | Duplicate-email check is a TOCTOU race: two concurrent registrations pass the check, the second `commit()` raises an unhandled `IntegrityError` → 500 | yes, but low likelihood and low impact | catch `IntegrityError` and re-flash the error |
+| 7 | app/jobseeker/routes.py:52 | `_application_values(form, existing=None)` — `existing` parameter is never used in the function body | yes — dead parameter | remove it |
+| 8 | app/jobseeker/routes.py:195–196 | `application_detail` runs the identical `Contact.query.filter_by(jobseeker_id=...).order_by(name).all()` query twice per page view | yes — two round trips where one would do | query once, derive `available_contacts` in Python |
+| 9 | app/models.py:7–8 | `datetime.utcnow()` is deprecated (removal planned); a `DeprecationWarning` fires on every model default during the test run — verified | yes | switch to `datetime.now(timezone.utc)` |
+| 10 | app/jobseeker/routes.py:314, app/adviser/routes.py:19 | `CV.query.get_or_404(...)` / `Query.get()` — SQLAlchemy 2.0 legacy API (`LegacyAPIWarning` in test output) — verified | yes | use `db.session.get(...)` / `get_or_404` from `flask_sqlalchemy` |
+| 11 | app/jobseeker/routes.py:54–55, 98–107; app/auth/routes.py:15; app/jobseeker/routes.py:344–355 | No server-side length checks on free-text fields (`company` is `String(180)`, `full_name` `String(160)`, etc.). HTML `maxlength` in register.html is client-side only. SQLite ignores `VARCHAR` lengths, so it works locally, but on PostgreSQL an over-long value raises a 500 | yes — portability trap, not a security hole | add server-side length validation or `db.Text` |
+| 12 | app/auth/routes.py:71–73 | `next` redirect check (`startswith("/") and not startswith("//")`) is weaker than Flask's documented `urlparse(next).netloc` check; the classic `/\evil.com` bypass looks possible | not exploitable — tested: Werkzeug percent-encodes the backslash in the `Location` header (`/%5Cevil.example.com`), so the browser stays on-origin | optional hardening; use the documented `netloc` check |
+| 13 | app/auth/routes.py:52–75 | No rate limiting or account lockout on `/login` — password brute-force is unthrottled | yes, but standard to defer for a PoC | add rate limiting before any real users |
+| 14 | app/__init__.py:25–26 | `SESSION_COOKIE_SECURE` not set, so session cookies can travel over plain HTTP | yes for any non-localhost deployment | set when serving over TLS |
+| 15 | app/jobseeker/routes.py:227–243 | `application_contacts_update`: an unrecognised `action` value (e.g. `"foo"`) falls through to `commit()` and redirect with no error — silently a no-op success | yes, minor | reject invalid actions with 400 |
+| 16 | tests/test_app.py:54 | `post("/admin/advisers/3/approve")` hardcodes user id 3, assuming seed insertion order | yes — brittle against seed changes | look the user up by email |
+| 17 | app/adviser/routes.py:35–38 | `from flask_login import current_user` / `from ..models import utcnow` inside the function body | yes, style only | hoist to module imports |
+
+## What I fixed, and why
+
+Nothing, by design — the brief for this review was to list problems with file and line, not to rewrite the app. All verification was read-only: I ran the existing test suite (7/7 pass, which surfaced the deprecation warnings in #9 and #10), reproduced the scheduler behaviour in #3 with a live app instance, and probed the login redirect in #12 with a test client. The two changes I would make first if fixing: #3/#4 (make scheduler start an explicit configuration decision and make the nudge job safe under concurrency, since the whole digest/nudge feature currently depends on undocumented werkzeug environment variables) and #1/#2 (make `SECRET_KEY` and `AUTO_INIT_DB` fail closed rather than silently defaulting to demo values).
+
+## What I am knowingly leaving, and why
+
+The hardcoded secret key, seeded demo credentials, `debug=True` on localhost, and the lack of rate limiting, account lockout, and `SESSION_COOKIE_SECURE` are all real issues that I am deliberately not treating as failures for this review: the repo is labelled a proof of concept ("Demo data only" in the footer, `.env.example` warns to change `SECRET_KEY`), every risky default is documented, and the app binds to loopback only. Similarly, the TOCTOU races (#4, #6) require concurrent requests that a single-user PoC will not produce. These belong on a pre-deployment checklist, not in a week-3 review verdict.
+
+## What the reviewer got wrong
+
+A generic AI review would plausibly raise all of the following, and all of them would be wrong here. There is no SQL injection — every query goes through SQLAlchemy's ORM with bound parameters (`filter_by`, `filter`), and no raw SQL or f-string SQL exists anywhere in the repo. There is no missing CSRF — `CSRFProtect` is initialised globally (app/__init__.py:44) and every POST form in every template carries `csrf_token()`, including login and register. There is no stored XSS — Jinja auto-escaping covers all rendered model fields, and the one hand-escaped attribute (`data-copy="{{ note.body|e }}"` in notifications.html) is correctly escaped. The "open redirect in `next`" (#12) looks like the textbook bypass but is neutralised by Werkzeug's Location-header encoding, which I verified empirically. And "any adviser can download any CV" (app/jobseeker/routes.py:311–320) is the intended trust model, not a broken access control: advisers are admin-approved and their whole job is reviewing jobseeker CVs. What a shallow review would actually miss is the one substantive bug: the scheduler that never starts under `flask run` (#3), because it only shows up when you trace the environment variables werkzeug sets.
