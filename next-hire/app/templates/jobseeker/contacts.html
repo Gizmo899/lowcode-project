@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}Contacts · Next Hire{% endblock %}
+{% block content %}
+<div class="page-heading heading-row"><div><div class="eyebrow">YOUR NETWORK</div><h1>Contacts</h1><p class="muted">Keep useful people close and link them to more than one opportunity.</p></div><a class="button button-primary" href="{{ url_for('jobseeker.contact_new') }}">＋ Add contact</a></div>
+<section class="card table-card"><div class="table-toolbar"><strong>{{ contacts|length }} contacts</strong><span class="muted"> · Private to you</span></div>
+  {% if contacts %}<div class="table-scroll"><table><thead><tr><th>Name</th><th>Company / role</th><th>Email</th><th>Linked applications</th><th></th></tr></thead><tbody>{% for contact in contacts %}<tr><td><a class="table-primary-link" href="{{ url_for('jobseeker.contact_detail', contact_id=contact.id) }}">{{ contact.name }}</a></td><td><span class="table-secondary">{{ contact.company or '—' }}</span><span class="table-secondary">{{ contact.job_title or '' }}</span></td><td>{{ contact.email or '—' }}</td><td>{{ contact.applications|length }}</td><td><a class="row-arrow" href="{{ url_for('jobseeker.contact_detail', contact_id=contact.id) }}">↗</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state"><span class="empty-icon">◎</span><strong>Your network starts here</strong><p>Add recruiters, hiring managers and people you meet along the way.</p><a class="button button-primary" href="{{ url_for('jobseeker.contact_new') }}">Add a contact</a></div>{% endif %}
+</section>
+{% endblock %}

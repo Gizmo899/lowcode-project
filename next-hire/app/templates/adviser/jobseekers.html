@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Jobseekers · Next Hire{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">ADVISER WORKSPACE</div><h1>Jobseekers</h1><p class="muted">Browse jobseeker profiles, CV versions and application pipelines.</p></div>
+<section class="card table-card"><div class="table-toolbar"><strong>{{ jobseekers|length }} jobseekers</strong><span class="muted"> · Read-only access</span></div>{% if jobseekers %}<div class="table-scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Applications</th><th>CV versions</th><th></th></tr></thead><tbody>{% for user in jobseekers %}<tr><td><a class="table-primary-link" href="{{ url_for('adviser.jobseeker_detail', jobseeker_id=user.id) }}">{{ user.full_name }}</a></td><td>{{ user.email }}</td><td class="nowrap">{{ user.created_at|datefmt }}</td><td>{{ user.applications|length }}</td><td>{{ user.cvs|length }}</td><td><a class="small-link" href="{{ url_for('adviser.jobseeker_detail', jobseeker_id=user.id) }}">View profile →</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state"><strong>No jobseekers yet</strong><p>Active jobseeker accounts will appear here.</p></div>{% endif %}</section>
+{% endblock %}
