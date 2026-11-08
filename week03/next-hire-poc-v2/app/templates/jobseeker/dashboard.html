@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Overview · Next Hire{% endblock %}
+{% block content %}
+<div class="page-heading heading-row">
+  <div><div class="eyebrow">YOUR JOB SEARCH</div><h1>Good day, {{ current_user.full_name.split()[0] }}.</h1><p class="muted">A clear view of where things stand and what comes next.</p></div>
+  <a class="button button-primary" href="{{ url_for('jobseeker.application_new') }}">＋ Add application</a>
+</div>
+<section class="metric-grid">
+  <article class="metric-card"><span class="metric-label">Open applications</span><strong>{{ open_count }}</strong><span class="metric-note">Across your pipeline</span></article>
+  <article class="metric-card"><span class="metric-label">Upcoming deadlines</span><strong>{{ deadlines|length }}</strong><span class="metric-note">Today and coming days</span></article>
+  <article class="metric-card"><span class="metric-label">Unread updates</span><strong>{{ nav_unread_count }}</strong><span class="metric-note">Follow-up nudges and alerts</span></article>
+  <article class="metric-card metric-action"><span class="metric-label">Your CV library</span><strong>↗</strong><a href="{{ url_for('jobseeker.cvs') }}">Manage CV versions</a></article>
+</section>
+<div class="content-grid dashboard-grid">
+  <section class="card section-card">
+    <div class="section-heading"><div><div class="eyebrow">DON'T MISS A DATE</div><h2>Upcoming deadlines</h2></div><span class="subtle-count">{{ deadlines|length }} shown</span></div>
+    {% if deadlines %}<div class="deadline-list">{% for item in deadlines %}<a class="deadline-row" href="{{ url_for('jobseeker.application_detail', application_id=item.id) }}"><div class="deadline-date"><strong>{{ item.deadline.strftime('%d') }}</strong><span>{{ item.deadline.strftime('%b') }}</span></div><div class="deadline-info"><strong>{{ item.company }}</strong><span>{{ item.job_title }}</span></div><span class="row-arrow">↗</span></a>{% endfor %}</div>
+    {% else %}<div class="empty-state"><span class="empty-icon">◷</span><strong>Nothing due just yet</strong><p>Any open application deadlines will appear here.</p><a href="{{ url_for('jobseeker.applications') }}">View your applications →</a></div>{% endif %}
+  </section>
+  <aside class="side-stack">
+    <section class="card section-card next-step-card"><div class="eyebrow">A GOOD NEXT STEP</div><h2>Keep your momentum.</h2><p class="muted">Update an application after a conversation, or connect a person who can help move it forward.</p><a class="text-link" href="{{ url_for('jobseeker.contacts') }}">Open your contact book <span>→</span></a></section>
+    <section class="card section-card"><div class="section-heading"><div><div class="eyebrow">RECENT ACTIVITY</div><h2>Latest updates</h2></div><a class="small-link" href="{{ url_for('jobseeker.notifications') }}">See all</a></div>
+      {% if notifications %}<div class="mini-notifications">{% for note in notifications %}<a href="{{ url_for('jobseeker.notifications') }}" class="mini-note"><span class="note-dot {{ 'unread' if not note.is_read else '' }}"></span><span><strong>{{ note.title }}</strong><small>{{ note.created_at|datetimefmt }}</small></span></a>{% endfor %}</div>{% else %}<p class="muted small">No notifications yet. We’ll let you know when it’s time to follow up.</p>{% endif %}
+    </section>
+    {% if latest_digest %}<section class="digest-teaser"><span class="eyebrow">WEEKLY DIGEST</span><strong>Your pipeline, at a glance.</strong><a href="{{ url_for('jobseeker.digest_detail', digest_id=latest_digest.id) }}">View latest digest →</a></section>{% endif %}
+  </aside>
+</div>
+{% endblock %}
