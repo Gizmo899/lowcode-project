@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Weekly digest · Next Hire{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">YOUR WEEKLY CHECK-IN</div><h1>Pipeline digest</h1><p class="muted">A weekly snapshot of open opportunities and deadlines ahead.</p></div>
+<section class="card table-card"><div class="table-toolbar"><strong>{{ digests|length }} saved digests</strong><span class="muted"> · Generated every Monday at 08:00</span></div>{% if digests %}<div class="digest-list">{% for item in digests %}<a class="digest-row" href="{{ url_for('jobseeker.digest_detail', digest_id=item.id) }}"><div class="digest-week"><span class="eyebrow">WEEK STARTING</span><strong>{{ item.week_start|datefmt }}</strong></div><div class="digest-summary"><span>{{ item.stage_counts.values()|sum }} open applications</span><small>{{ item.upcoming_deadlines|length }} upcoming deadlines</small></div><span class="row-arrow">↗</span></a>{% endfor %}</div>{% else %}<div class="empty-state"><span class="empty-icon">▤</span><strong>Your first digest is on its way</strong><p>A pipeline snapshot will appear here each Monday morning.</p></div>{% endif %}</section>
+{% endblock %}
