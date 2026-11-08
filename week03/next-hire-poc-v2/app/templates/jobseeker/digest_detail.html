@@ -1,7 +1,0 @@
-{% extends 'base.html' %}
-{% block title %}Digest · {{ digest.week_start|datefmt }} · Next Hire{% endblock %}
-{% block content %}
-<div class="page-heading"><a class="back-link" href="{{ url_for('jobseeker.digests') }}">← All digests</a><div class="eyebrow">WEEKLY PIPELINE DIGEST</div><h1>Week starting {{ digest.week_start|datefmt }}</h1><p class="muted">Generated {{ digest.generated_at|datetimefmt }}.</p></div>
-<section class="digest-stage-grid">{% for stage, count in digest.stage_counts.items() %}<article class="digest-stage-card"><span>{{ stage|title }}</span><strong>{{ count }}</strong></article>{% endfor %}</section>
-<section class="card section-card"><div class="section-heading"><div><div class="eyebrow">LOOKING AHEAD</div><h2>Deadlines in the next 7 days</h2></div><span class="subtle-count">{{ digest.upcoming_deadlines|length }} items</span></div>{% if digest.upcoming_deadlines %}<div class="deadline-list">{% for row in digest.upcoming_deadlines %}<a class="deadline-row" href="{{ url_for('jobseeker.application_detail', application_id=row.application_id) }}"><div class="deadline-date digest-date"><strong>{{ row.deadline|isodatefmt }}</strong></div><div class="deadline-info"><strong>{{ row.company }}</strong><span>{{ row.job_title }}</span></div><span class="row-arrow">↗</span></a>{% endfor %}</div>{% else %}<div class="empty-state compact-empty"><strong>No deadlines this week</strong><p>You have a little more room to focus on the next step.</p></div>{% endif %}</section>
-{% endblock %}
