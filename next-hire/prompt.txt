@@ -1,0 +1,10 @@
+I want to create a Job Application Tracker web application.
+It has to be accessed by two users with sign-in and log-in options: Jobseekers and Career advisers.
+It has to give the possibility to make job application, to add the contact details and to show the deadlines of job offers in the core app.
+It has to report a weekly pipeline digest as a scheduled automation.
+It has to give the chance of a follow-up nudge if there is no reply from employers as a triggered automation after a job application.
+As approval steps, careers advisers have to be able to sign off the jobseekers'CV.
+
+Week03: Jobseekers, Career advisers, Sign-in members, record a CV, show the application outcome.
+
+Ask me 20 question, 1 at a time, to create a specification document (.md file), to be used after to generate a PoC version.

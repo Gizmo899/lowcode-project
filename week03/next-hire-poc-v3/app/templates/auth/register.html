@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Create account · Next Hire{% endblock %}
+{% block content %}
+<section class="auth-layout register-layout">
+  <div class="auth-aside"><div class="eyebrow">START WITH A CLEAR VIEW</div><h1>Your next opportunity starts here.</h1><p>Build your pipeline, keep track of every conversation, and make each application count.</p></div>
+  <div class="auth-card card">
+    <div class="eyebrow">GET STARTED</div><h2>Create your account</h2><p class="muted">Jobseeker accounts are active immediately. Adviser accounts require admin approval.</p>
+    <form method="post" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Full name<input name="full_name" required maxlength="160" autocomplete="name" value="{{ request.form.get('full_name','') }}"></label>
+      <label>Email address<input type="email" name="email" required autocomplete="email" value="{{ request.form.get('email','') }}"></label>
+      <label>Password<input type="password" name="password" required minlength="8" autocomplete="new-password"><small>At least 8 characters.</small></label>
+      <label>Account type<select name="role"><option value="jobseeker" {{ 'selected' if request.form.get('role','jobseeker') == 'jobseeker' }}>Jobseeker</option><option value="adviser" {{ 'selected' if request.form.get('role') == 'adviser' }}>Career adviser</option></select></label>
+      <button class="button button-primary button-full" type="submit">Create account <span>→</span></button>
+    </form>
+    <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+  </div>
+</section>
+{% endblock %}
