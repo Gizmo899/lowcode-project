@@ -301,3 +301,4 @@ Fill this in as you go. It is great material for the "design decisions" section 
 | 2026-11-19 | Added four indexes on the foreign-key and status columns | SQLite does not index foreign keys, so CV lists and account deletes would have to read whole tables |
 | 2026-11-19 | Moved `file_data` to the last column of `cv` (SQL, field table and diagram) | In a test with 200 files of 1 MB, listing CVs by status took 38.8 ms with the file first and 0.3 ms with it last |
 | 2026-11-19 | Tightened CHECKs: email shape; "not blank" now also refuses tabs and new lines; the CV file must be a real, non-empty BLOB; the file name needs a name before the extension and at most 255 characters | Testing showed `@x.ie`, `a b@x.ie`, `a@.`, a name made only of a new line, an empty file, a file called `.pdf` and a file stored as text were all accepted |
+| 2026-11-20 | Nothing to change after testing the orphans | No orphan was present inside database |

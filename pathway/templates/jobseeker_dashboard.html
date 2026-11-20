@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Pathway{% endblock %}
+{% block content %}
+<section class="welcome-row"><div><div class="eyebrow">YOUR WORKSPACE</div><h1>Good to see you, {{ user.full_name.split(' ')[0] }}<span class="heading-period">.</span></h1><p class="page-lede">Every step forward counts. Here's where things stand today.</p></div><a class="button button-primary" href="{{ url_for('applications.create') }}">Add application <span aria-hidden="true">＋</span></a></section>
+{% if user.account_status == 'awaiting_adviser' %}
+<div class="notice-panel"><span class="notice-symbol">✳</span><div><strong>One more step to activate your support</strong><p>Your account is ready. Choose a career adviser to connect with your support team and share your CV and progress.</p><a class="text-link" href="{{ url_for('jobseekers.profile') }}">Choose an adviser <span aria-hidden="true">→</span></a></div></div>
+{% endif %}
+<section class="stat-grid">
+  <article class="stat-card stat-card-dark"><div class="stat-label">TOTAL APPLICATIONS</div><div class="stat-number">{{ total }}</div><div class="stat-foot">Your job search at a glance</div><div class="stat-decoration">↗</div></article>
+  <article class="stat-card"><div class="stat-label">IN PROGRESS</div><div class="stat-number">{{ counts['Applied'] }}</div><div class="stat-foot"><span class="tiny-dot dot-blue"></span> Waiting to hear back</div></article>
+  <article class="stat-card"><div class="stat-label">SUCCESSFUL</div><div class="stat-number">{{ counts['Successful'] }}</div><div class="stat-foot"><span class="tiny-dot dot-green"></span> Positive outcomes</div></article>
+  <article class="stat-card"><div class="stat-label">UNREAD NOTIFICATIONS</div><div class="stat-number">{{ unread_count }}</div><div class="stat-foot"><a href="{{ url_for('notifications.jobseeker_list') }}">Open notification centre →</a></div></article>
+</section>
+<section class="dashboard-columns">
+  <div class="panel panel-main"><div class="panel-heading"><div><div class="eyebrow">RECENT ACTIVITY</div><h2>Your applications</h2></div><a class="text-link" href="{{ url_for('applications.listing') }}">View all <span aria-hidden="true">→</span></a></div>
+    {% if recent_applications %}<div class="application-list compact-list">{% for application in recent_applications %}<div class="application-row"><span class="company-avatar">{{ application.employer_name[:1]|upper }}</span><div class="application-meta"><strong>{{ application.job_title }}</strong><span>{{ application.employer_name }} · {{ application.date_applied }}</span></div><span class="status-pill status-{{ application.status|lower }}">{{ application.status }}</span></div>{% endfor %}</div>
+    {% else %}<div class="empty-state"><div class="empty-icon">↗</div><h3>Your first step starts here</h3><p>Add an application to start building your job search timeline.</p><a class="button button-secondary" href="{{ url_for('applications.create') }}">Add your first application</a></div>{% endif %}
+  </div>
+  <div class="side-stack">
+    <div class="panel adviser-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR SUPPORT</div><h2>Career adviser</h2></div><span class="panel-icon">✳</span></div>{% if user.adviser_name %}<div class="adviser-person"><span class="person-avatar">{{ user.adviser_name[:1]|upper }}</span><div><strong>{{ user.adviser_name }}</strong><span>Your assigned adviser</span></div></div><p class="muted-small">Your adviser can review your CV and see your application progress.</p>{% else %}<p class="muted-small">You haven't selected an adviser yet. Choose one to activate your support.</p><a class="text-link" href="{{ url_for('jobseekers.profile') }}">Select an adviser →</a>{% endif %}</div>
+    <div class="panel cv-summary"><div class="panel-heading"><div><div class="eyebrow">YOUR DOCUMENTS</div><h2>Current CV</h2></div><span class="panel-icon">▤</span></div>{% if current_cv %}<div class="cv-file"><span class="file-icon">PDF</span><div><strong>{{ current_cv.original_filename }}</strong><span>Uploaded {{ current_cv.uploaded_at[:10] }}</span></div></div><span class="status-pill status-{{ current_cv.approval_status }}">{{ current_cv.approval_status|title }}</span><a class="text-link cv-manage-link" href="{{ url_for('cv_management.manage') }}">View CV and feedback →</a>{% else %}<p class="muted-small">Share your current CV to get feedback from your adviser.</p><a class="text-link" href="{{ url_for('cv_management.manage') }}">Upload a CV →</a>{% endif %}</div>
+  </div>
+</section>
+{% endblock %}
