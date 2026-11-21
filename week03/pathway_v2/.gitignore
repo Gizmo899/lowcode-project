@@ -10,3 +10,5 @@ instance/private_uploads/cv/*
 *.log
 .pytest_cache/
 .coverage
+ *.db
+
