@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Adviser workspace — Pathway{% endblock %}
+{% block content %}
+<section class="welcome-row"><div><div class="eyebrow">ADVISER WORKSPACE</div><h1>Your people, <em>their progress.</em></h1><p class="page-lede">A shared view of the jobseekers you're supporting.</p></div><div class="count-bubble"><strong>{{ jobseekers|length }}</strong><span>assigned<br>jobseekers</span></div></section>
+<section class="panel adviser-list-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR CASELOAD</div><h2>Assigned jobseekers</h2></div><span class="subtle-label">Private adviser view</span></div>
+{% if jobseekers %}<div class="table-wrap"><table class="data-table"><thead><tr><th>JOBSEEKER</th><th>CONTACT</th><th>APPLICATIONS</th><th>CURRENT CV</th><th></th></tr></thead><tbody>{% for person in jobseekers %}<tr><td><div class="table-person"><span class="person-avatar">{{ person.full_name[:1]|upper }}</span><span><strong>{{ person.full_name }}</strong><small>Joined {{ person.created_at[:10] }}</small></span></div></td><td>{% set mail = person.email|mailto %}{% if mail %}<a href="{{ mail }}">{{ person.email }}</a>{% else %}{{ person.email }}{% endif %}<small>{{ person.phone }}</small></td><td><span class="number-chip">{{ person.application_count }}</span></td><td>{% if person.cv_status %}<span class="status-pill status-{{ person.cv_status }}">{{ person.cv_status|title }}</span>{% else %}<span class="muted-small">Not uploaded</span>{% endif %}</td><td><a class="row-link" href="{{ url_for('advisers.jobseeker_detail', jobseeker_id=person.id) }}">Open profile <span>→</span></a></td></tr>{% endfor %}</tbody></table></div>
+{% else %}<div class="empty-state"><div class="empty-icon">✳</div><h3>Your caseload will appear here</h3><p>When jobseekers select you during onboarding, their profiles and CVs will be available in this workspace.</p></div>{% endif %}
+</section>
+{% endblock %}

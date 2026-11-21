@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Sign in — Pathway{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-aside"><div class="eyebrow">WELCOME BACK</div><h1>Your next step<br><em>starts here.</em></h1><p>Pick up where you left off and keep your job search moving.</p><div class="aside-quote">“Small steps, taken consistently, create big change.”</div></div>
+  <div class="form-card auth-card"><div class="form-kicker">YOUR PATHWAY ACCOUNT</div><h2>Sign in</h2><p class="form-intro">Good to have you back. Enter your details below.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254" value="{{ request.form.get('email', '') }}">
+      <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="button button-primary button-full" type="submit">Sign in <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="form-foot">New to Pathway? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+  </div>
+</section>
+{% endblock %}

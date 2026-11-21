@@ -36,7 +36,10 @@ Reviewed by: Claude (Claude Sonnet 5.5, Anthropic) Date: 2026-11-21
 1st fix: app.py:20 | SECRET_KEY falls back to a hard-coded public value
 Now there are no more built-in key, weak or example keys are refused too, the .env file now works and the docs no longer point at the trap.
 The app uses a secret key to sign the login cookie. That is how it knows a cookie really came from the app and wasn’t made up by a visitor. Anyone who had read the code could use it to create a cookie that said “I am user 1, a career adviser”, and the app would accept it.
- 
+
+2nd fix: auth.py:82; jobseekers.py:69; advisers.py:78; adviser_jobseeker.html:5-6; adviser_dashboard.html:6 | Email validation is only `"@" in email`, and the value is placed in mailto: links the adviser clicks. Email can be changed without a password. The email check was too weak.
+Now there is one strict email check, used in all three places (registration, jobseeker profile, adviser profile). Email links can’t be tricked anymore and changing your email now asks for your current password.
+
 ## What I am knowingly leaving, and why
 (this is not a failing — naming it is the point)
  
