@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+instance/*.sqlite
+instance/*.sqlite-*
+instance/private_uploads/cv/*
+!instance/private_uploads/cv/.gitkeep
+*.log
+.pytest_cache/
+.coverage
