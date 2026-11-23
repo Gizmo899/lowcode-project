@@ -68,3 +68,67 @@ python tools/check_db.py app.db --src .              health check of database an
 ```
 
 Run them from the top folder of your project. If one says it cannot find something, check where you are with `pwd`.
+
+
+## Scheduled automation (follow-up nudges and weekly digest)
+
+Your app has two automatic jobs: the follow-up nudge and the weekly pipeline digest. Flask cannot run jobs on a timer by itself, so **one script**, `tools/run_automations.py`, does both, and your computer's own scheduler starts it **every hour, on the hour**. `docs/data-model.md` (section "Automations") says exactly what the script does.
+
+The script is not written yet. Follow these steps once it exists. Always use the same `app.db` that your app uses, and run everything from the top folder of your project.
+
+### Step 1: run it by hand first
+
+```text
+python tools/run_automations.py app.db
+```
+
+(Mac: `python3`.) It should finish without an error. Run it a second time straight away: the second run must create **no new** notifications, because the app remembers what it has already sent. If it creates duplicates, fix that before you schedule anything.
+
+### Step 2: schedule it
+
+Pick your computer.
+
+**Windows (Task Scheduler)**
+
+1. Open a terminal and type `where python`. Copy the first line. This is the full path to Python (for example `C:\Users\you\AppData\Local\Programs\Python\Python312\python.exe`).
+2. Type `cd` on its own and copy the result, or copy the folder path from File Explorer. This is the full path to your project's top folder (the one that contains `app.db`).
+3. Open the Start menu, search for **Task Scheduler** and open it. In the right-hand panel click **Create Task** (not "Create Basic Task").
+4. **General** tab: give it a name, for example `Job tracker automations`.
+5. **Triggers** tab, click **New**. Choose **On a schedule**, **Daily**, starting today at `00:00`. Tick **Repeat task every** and choose **1 hour**, **for a duration of** **1 day**. Click OK.
+6. **Actions** tab, click **New**, action **Start a program**:
+   - **Program/script:** the Python path from step 1
+   - **Add arguments:** `tools\run_automations.py app.db`
+   - **Start in:** the project folder from step 2 (no quotation marks)
+7. **Settings** tab: tick **Run task as soon as possible after a scheduled start is missed**.
+8. Click OK. Right-click your new task and choose **Run** to test it, then check that the **Last Run Result** column says `The operation completed successfully.`
+
+To stop it: right-click the task and choose **Disable** (or **Delete**).
+
+**Mac and Linux (cron)**
+
+1. In a terminal, type `which python3` and copy the result (the full path to Python). Then go to your project's top folder and type `pwd` and copy that too.
+2. Type `crontab -e` to open your schedule.
+3. Add this one line at the end, replacing the two paths with the ones you copied:
+
+```text
+0 * * * * cd /full/path/to/your/project && /full/path/to/python3 tools/run_automations.py app.db >> automations.log 2>&1
+```
+
+   This means: at minute 0 of every hour, go to the project folder and run the script, and write anything it prints (including errors) to `automations.log`.
+4. Save and close. Type `crontab -l` to check the line is there.
+5. After the next full hour, open `automations.log` to see what happened. An empty or missing log with no errors usually means nothing was due.
+
+To stop it: type `crontab -e` again and delete the line.
+
+On a Mac, if your project is inside Documents, Desktop or Downloads, macOS may block cron from reading it. If the log shows "Operation not permitted", either move the project to another folder or give cron access in System Settings > Privacy & Security > Full Disk Access.
+
+### Things to know
+
+- **Your computer must be on.** If it is off at 8:00 on Monday, the digest is created at the next hourly run that same Monday. If it is off for the whole of Monday, that week's digest is skipped. Cron on a Mac does not catch up after sleep.
+- **Time zone:** the script works out Irish time (Europe/Dublin) by itself, so the computer's own time zone setting does not matter.
+- **Running twice is safe.** Each follow-up reminder is marked as sent or skipped once it has been processed, and the script checks whether a digest already exists today, so a double run creates nothing extra.
+- **Do not commit the log.** Add this line to `.gitignore`, next to `*.db` and `__pycache__/`:
+
+```text
+*.log
+```
