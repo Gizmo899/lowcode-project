@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Pathway{% endblock %}
+{% block content %}
+<section class="welcome-row"><div><div class="eyebrow">YOUR WORKSPACE</div><h1>Good to see you, {{ user.full_name.split(' ')[0] }}<span class="heading-period">.</span></h1><p class="page-lede">Every step forward counts. Here's where things stand today.</p></div><a class="button button-primary" href="{{ url_for('applications.create') }}">Add application <span aria-hidden="true">＋</span></a></section>
+{% if not user.assigned_adviser_id %}
+<div class="notice-panel"><span class="notice-symbol">✳</span><div><strong>One more step to activate your support</strong><p>Choose a career adviser to share your CVs and progress with them.</p><a class="text-link" href="{{ url_for('jobseekers.profile') }}">Choose an adviser <span aria-hidden="true">→</span></a></div></div>
+{% endif %}
+<section class="stat-grid">
+  <article class="stat-card stat-card-dark"><div class="stat-label">TOTAL APPLICATIONS</div><div class="stat-number">{{ total }}</div><div class="stat-foot">Your job search at a glance</div><div class="stat-decoration">↗</div></article>
+  <article class="stat-card"><div class="stat-label">IN PROGRESS</div><div class="stat-number">{{ counts['applied'] }}</div><div class="stat-foot"><span class="tiny-dot dot-blue"></span> Waiting to hear back</div></article>
+  <article class="stat-card"><div class="stat-label">INTERVIEWS</div><div class="stat-number">{{ counts['interview'] }}</div><div class="stat-foot"><span class="tiny-dot dot-green"></span> Moving forward</div></article>
+  <article class="stat-card"><div class="stat-label">UNREAD NOTIFICATIONS</div><div class="stat-number">{{ unread_count }}</div><div class="stat-foot"><a href="{{ url_for('notifications.jobseeker_list') }}">Open notification centre →</a></div></article>
+</section>
+<section class="dashboard-columns">
+  <div class="panel panel-main"><div class="panel-heading"><div><div class="eyebrow">RECENT ACTIVITY</div><h2>Your applications</h2></div><a class="text-link" href="{{ url_for('applications.listing') }}">View all <span aria-hidden="true">→</span></a></div>
+    {% if recent_applications %}<div class="application-list compact-list">{% for application in recent_applications %}<div class="application-row"><span class="company-avatar">{{ application.company_name[:1]|upper }}</span><div class="application-meta"><strong>{{ application.job_title }}</strong><span>{{ application.company_name }} · {{ application.date_applied }}</span></div><span class="status-pill status-{{ application.status|lower }}">{{ application.status|title }}</span></div>{% endfor %}</div>
+    {% else %}<div class="empty-state"><div class="empty-icon">↗</div><h3>Your first step starts here</h3><p>Add an application to start building your job search timeline.</p><a class="button button-secondary" href="{{ url_for('applications.create') }}">Add your first application</a></div>{% endif %}
+  </div>
+  <div class="side-stack">
+    <div class="panel adviser-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR SUPPORT</div><h2>Career adviser</h2></div><span class="panel-icon">✳</span></div>{% if user.adviser_name %}<div class="adviser-person"><span class="person-avatar">{{ user.adviser_name[:1]|upper }}</span><div><strong>{{ user.adviser_name }}</strong><span>Your adviser</span></div></div><p class="muted-small">Your adviser can review your CVs and see your applications, read-only.</p>{% else %}<p class="muted-small">You haven't chosen an adviser yet. Choose one to activate your support.</p><a class="text-link" href="{{ url_for('jobseekers.profile') }}">Choose an adviser →</a>{% endif %}</div>
+    <div class="panel cv-summary"><div class="panel-heading"><div><div class="eyebrow">YOUR DOCUMENTS</div><h2>Your CVs</h2></div><span class="panel-icon">▤</span></div>{% if cvs %}<div class="cv-file"><span class="file-icon">CV</span><div><strong>{{ cvs|length }} saved</strong><span>{{ waiting_cvs }} waiting for review</span></div></div><a class="text-link cv-manage-link" href="{{ url_for('cv_management.manage') }}">View CVs and feedback →</a>{% else %}<p class="muted-small">Share a CV to get feedback from your adviser.</p><a class="text-link" href="{{ url_for('cv_management.manage') }}">Upload a CV →</a>{% endif %}</div>
+  </div>
+</section>
+{% endblock %}

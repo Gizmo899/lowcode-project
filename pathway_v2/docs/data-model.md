@@ -284,19 +284,15 @@ erDiagram
     }
 ```
 
-## Known differences from the existing app (pathway_v3)
+## Known differences between this document and the code
 
-This file is the source of truth. The existing code differs on these points, on purpose or not yet changed:
+The app has been moved onto this data model (2026-11-24). What the code still does not have:
 
-- Application stages here are applied, interview, rejected, withdrawn. The app uses Applied, Successful, Unsuccessful, Withdrawn.
-- The role is `adviser` here and `career_adviser` in the app.
-- CV files are stored inside the database (1 MB) here. The app keeps them in a private folder (5 MB) and keeps a version history.
-- Passwords need 8+ characters, a capital and a special character, no spaces. The app asks for 10+ characters.
-- Phone is optional and unique here. The app requires it for jobseekers and does not make it unique.
-- A review comment is optional and rejection-only here. The app requires one on every review.
-- The digest runs Monday 8:00 Irish time with live figures. The app runs Monday 9:00 server time and saves the figures in the message.
-- The nudge repeats every 7 days here. The app sends one.
-- Schema changes go in numbered files in `schema/` here. The app has a single `schema.sql`.
+- **No limit on failed sign-ins.** The earlier version of the app counted failed attempts in a `login_attempts` table. That table is not in this data model, so the limit is gone. It is open point B in `docs/threat-analysis.md`.
+- **No run history.** The earlier `automation_runs` table is not in this data model either (open point D). The hourly script prints counts only, for a log file.
+- **A bookkeeping table.** `tools/migrate.py` creates a small table called `schema_migration` to remember which files in `schema/` it has applied. It is not part of this data model.
+- **The tidy-up job** uses the retention periods in `docs/data-protection.md`, which are proposals (GUESS: please check).
+- **Time zone support.** The code uses Python's `zoneinfo` for Irish time. On Windows this needs the `tzdata` package, otherwise the code falls back to UTC.
 
 ## What I changed after testing
 
@@ -305,3 +301,5 @@ Fill this in as you go. It is great material for the "design decisions" section 
 | Date | What I changed | Why (what testing showed me) |
 |---|---|---|
 | 2026-11-23 | Removed AUTOINCREMENT after INTEGER PRIMARY KEY on 001_initial.sql | With AUTOINCREMENT SQLite remembers the highest number it has ever handed out, so an id is never used twice, even after its row is deleted. Without it SQLite gives each new row the highest id that currently exists, plus 1. If the newest row has been deleted, its number can be used again. |
+| 2026-11-23 | Deleted an ORPHAN ROW from SQLite database | ORPHAN ROWS (rows that point at something that does not exist): "DELETE FROM follow_up_reminder WHERE application_id = 999" |
+| 2026-11-24 | Moved the whole app onto this schema (CVs now stored inside the database, one table per entity in this file) | The earlier app used a different schema. The ported app passes 114 tests against this one |

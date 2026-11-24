@@ -6,7 +6,7 @@ This log is a graded part of CA2. It feeds the AI Fluency declaration (Delegatio
 
 | Tool | Version or plan | What I used it for |
 |---|---|---|
-| Claude.ai | free | schema, data layer, tests |
+| Claude.ai | free | schema, data layer, web app, tests |
 
 ## Log entries
 
@@ -132,6 +132,36 @@ Triggers owner_must_be_jobseeker (insert and update): a notification can't belon
 | Raw error text: SQLite's raw error text includes my -- comments for CHECK rules, so the app must show friendly messages, as AGENTS.md says.
 | Comments: continuation lines inside a multi-line rule share the comment on the line above.
 - **Commit:** git commit -m "Add initial schema from data model"
+
+### Entry 3: Rewrite Flask web app basing on SQLite schema
+
+- **Date:** 2026-11-24
+- **Tool:** Claude.ai
+- **Task (why I used AI here):** rewriting my flask web app 'pathway' moving it onto SQLite schema '001_initial.sql'. 
+- **Prompt (verbatim):**
+
+  ```text
+  Rewrite my Flask task routes to use this SQLite schema. Use parameterised queries with ? placeholders — never string formatting or f-strings in SQL. Enable PRAGMA foreign_keys = ON on each connection. Return a 404 if a task id does not exist.
+  ```
+
+- **What it produced:** `pathway_v2` web app updated
+- **Decision:** Accepted
+- **Why:** The app runs correctly on the browser and it has a memory. It has passed all the 114 tests.
+- **What I checked:** I ran `python tools/migrate.py app.db`, then ran `python app.py` and checked it on the browser.  I stored some data inside the app to check if it has a memory, and it worked out.
+- **Decisions the AI made that I did not specify:** 
+| Scope: I moved the whole app, not just one set of routes, because a partial move can't work (applications point at the new user table). I treated "task" as job application.
+| Database file: the default is now app.db in the project folder, overridable with DATABASE_PATH.
+| Connection function: get_connection(path=None) gives one connection per web request and a fresh one for scripts and tests.
+| Tidy-up job: I implemented it with the proposed 90-day periods, marked GUESS in your docs.
+Reminder dates: reminders are due date_applied plus 7 days, and each next one is due 7 days after it was sent. Editing the date applied does not move a waiting reminder.
+| Digest timing: the digest notification is created at the first hourly run on Monday from 8:00 Irish time, and the figures live on a new /digest page.
+| Choosing an adviser: a jobseeker must pick an adviser at sign-up if any exist, and can pick one later from the profile when none was chosen or the adviser has left.
+| Passwords: a capital letter means A to Z only, so an accented capital doesn't count.
+| Adviser pages: advisers don't give a phone number, and I removed their empty notifications page. They can decide only a CV that is still waiting. A comment on an approval is refused with a message.
+| Messages and uploads: sign-up now says an email or phone is "already in use". The upload limit is 1 MB for the file, and the request limit is 100 KB larger so the form fits. The file-content checks from the old app are kept.
+| Windows: Irish time uses Python's built-in zoneinfo, which needs the tzdata package on Windows. I noted this in the README.
+| Privacy page: I rewrote its text to match docs/data-protection.md
+- **Commit:** -
 
 ---
 
