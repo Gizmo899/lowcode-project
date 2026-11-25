@@ -24,7 +24,14 @@ class DatabaseTestCase(unittest.TestCase):
         self.db_path = str(Path(temp.name) / "test.db")
         apply_migrations(self.db_path)
         self.conn = get_connection(self.db_path)  # foreign keys ON, like every other connection
-        self.addCleanup(self.conn.close)
+        # Resolve self.conn when cleanup runs, not when setUp registers the callback.
+        # Tests may close and replace the connection (for example, persistence tests).
+        self.addCleanup(self._close_database_connection)
+
+    def _close_database_connection(self):
+        connection = getattr(self, "conn", None)
+        if connection is not None:
+            connection.close()
 
     # ----- tiny helpers for direct database checks
     def rows(self, sql, params=()):

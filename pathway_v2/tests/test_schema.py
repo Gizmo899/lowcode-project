@@ -201,14 +201,11 @@ class PersistenceTests(DatabaseTestCase):
         self.add_application(seeker, company="Kept Ltd")
         self.add_cv(seeker, title="Kept CV")
         self.conn.close()
-        reopened = get_connection(self.db_path)
-        try:
-            self.assertEqual(reopened.execute("SELECT company_name FROM job_application").fetchone()[0], "Kept Ltd")
-            self.assertEqual(reopened.execute("SELECT title FROM cv").fetchone()[0], "Kept CV")
-            self.assertEqual(reopened.execute("SELECT email FROM user").fetchone()[0], "p@x.test")
-        finally:
-            reopened.close()
-        self.conn = get_connection(self.db_path)  # so tearDown cleanup has something to close
+        self.conn = get_connection(self.db_path)
+        self.assertEqual(self.conn.execute("SELECT company_name FROM job_application").fetchone()[0], "Kept Ltd")
+        self.assertEqual(self.conn.execute("SELECT title FROM cv").fetchone()[0], "Kept CV")
+        self.assertEqual(self.conn.execute("SELECT email FROM user").fetchone()[0], "p@x.test")
+        # DatabaseTestCase cleanup closes this replacement connection before deleting the temp folder.
 
     def test_migrations_apply_once_and_only_once(self):
         from tools.migrate import apply_migrations
