@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#162c45">
+  <title>{% block title %}Pathway — Job Application Tracker{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="Pathway home">
+      <span class="brand-mark">P</span>
+      <span>pathway<span class="brand-dot">.</span></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      {% if session.get('user_id') %}
+        {% if session.get('role') == 'jobseeker' %}
+          <a href="{{ url_for('jobseekers.dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('applications.listing') }}">Applications</a>
+          <a href="{{ url_for('cv_management.manage') }}">My CV</a>
+          <a href="{{ url_for('notifications.jobseeker_list') }}">Notifications</a>
+        {% else %}
+          <a href="{{ url_for('advisers.dashboard') }}">My jobseekers</a>
+        {% endif %}
+        <a href="{{ url_for('jobseekers.profile') if session.get('role') == 'jobseeker' else url_for('advisers.profile') }}">{{ session.get('full_name', 'Account') }}</a>
+        <form class="nav-logout" method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="nav-link-button" type="submit">Sign out</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('privacy') }}">Privacy</a>
+        <a href="{{ url_for('auth.login') }}">Sign in</a>
+        <a class="nav-cta" href="{{ url_for('auth.register') }}">Create account <span aria-hidden="true">↗</span></a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack" aria-live="polite">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <span>© {{ now_year if now_year is defined else 2026 }} Pathway</span>
+    <span>Career support, organised.</span>
+    <a href="{{ url_for('privacy') }}">Privacy notice</a>
+  </footer>
+</body>
+</html>
