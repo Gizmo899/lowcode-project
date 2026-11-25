@@ -1,4 +1,4 @@
-# AI-usage log: [YOUR APP NAME]
+# AI-usage log: Pathway
 
 This log is a graded part of CA2. It feeds the AI Fluency declaration (Delegation, Description, Discernment, Diligence). Add an entry every time AI does something meaningful for your project, including the times it got things wrong. Paste prompts **exactly** as you typed them.
 
@@ -6,7 +6,7 @@ This log is a graded part of CA2. It feeds the AI Fluency declaration (Delegatio
 
 | Tool | Version or plan | What I used it for |
 |---|---|---|
-| Claude.ai | free | schema, data layer, web app, tests |
+| Claude.ai | free | schema, data layer, web app, tests, fixing |
 
 ## Log entries
 
@@ -218,7 +218,7 @@ Then list any decision you made that I did not specify.
 ### Entry 5: Fixing the connection cleanup
 
 - **Date:** 2026-11-25
-- **Tool:** Claude.ai
+- **Tool:** ChatGPT
 - **Task (why I used AI here):** The test closes its original connection, opens a replacement connection, closes that replacement, and then opens a third connection. However, the test cleanup handler still refers to the original connection. The third connection is therefore left open, preventing Windows from deleting test.db when the temporary directory is cleaned up.
 - **Prompt (verbatim):**
 
@@ -242,8 +242,104 @@ PermissionError: [WinError 32] Impossibile accedere al file. Il file è utilizza
 - **Decisions the AI made that I did not specify:** none
 - **Commit:** `"Add constraint tests (UNIQUE, CHECK, NOT NULL, FK, delete rule, persistence)"`
 
----
 
+### Entry 6: Generating table of unspecified decision made by agent
+
+- **Date:** 2026-11-25
+- **Tool:** Claude.ai
+- **Task (why I used AI here):** I asked Claude.ai about `prompts/05-what-did-you-decide.md` "Decisions I made that you did not specify"
+- **Prompt (verbatim):**
+
+  ```text
+Do not change any files. Look back over everything you have done in this conversation and
+in this project today.
+
+List every decision you made that I did not explicitly specify. Include names you chose,
+data types, limits, default values, delete behaviour (ON DELETE), error handling, libraries,
+file locations, and anything you removed or rewrote.
+
+Give me a table with these columns:
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+
+Then tell me which ONE of these decisions you think I should check first, and why.
+
+- `Database Design`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Table and field names |	cv, job_application, follow_up_reminder, notification; assigned_adviser_id, decided_by, file_data, advert_url, due_on, is_read, kind |	Plural names; the old app's names |	Readable and consistent |	The app and docs must use these exact names, and a rename needs a new migration |
+| Stored words	| Roles jobseeker/adviser. CV: waiting_for_review/approved/rejected. Applications: applied/interview/rejected/withdrawn. Reminders: pending/sent/skipped. Notifications: nudge/digest/cv_decision |	Capitalised words; the old app's words	| Lowercase with underscores is easy to check	| Anything stored under the old words no longer matches |
+| Data types |	Ids are INTEGER, most fields are TEXT, CV files are BLOB, is_read is 0/1, dates are date-only text (your rule) |	Timestamps with times; a true/false type |	SQLite has no date or boolean type |	No time-of-day ordering within a day |
+| Date checks and defaults |	A date is valid only if SQLite returns it unchanged. uploaded_at and created_on default to today's date in UTC |	Irish date; full timestamps |	Simple, and it catches 2026-02-30 |	UTC can be a day behind Irish time for an hour after midnight in summer. The app passes the Irish date in practice |
+| Email, phone, password rules in the database |	Email ignores capitals (English letters only). Phone is unique and blank means empty. No email or phone format rule. password_hash is only NOT NULL |	Format checks; a hash length check |	You said "unique" and "capitals ignored" |	Odd emails pass the database (the app checks them), and an empty hash would be accepted |
+| Text lengths |	None in the database. The app limits name 120, phone 40, company and job title 160, CV title 120, notes and comment 4,000, link 2,048 |	Limits as CHECK rules |	Most numbers come from the old app |	A direct database write skips them |
+| Advert link rule |	Must start http:// or https:// in any capitals, and have no spaces. Tabs and line breaks aren't checked |	Stricter |	Your wording |	Odd links get through |
+| CV file type check |	Extra typeof = blob rule, and the file can't be empty |	Size check only |	Text would otherwise slip past the byte limit |	None found |
+- `Delete behaviour`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Reminders when their application is deleted | CASCADE (marked GUESS, not explicitly confirmed) | RESTRICT; SET NULL | Follows your privacy reason and the old app | Low. A reminder is useless without its application |
+| Rule 3 reason wording | "The comment stays because it is part of the jobseeker's CV record" (marked GUESS) | Your own words | I wrote it from your answer | The reason on record isn't yours |
+- `Database rules versus app rules`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Role rules as 14 triggers | The role never changes, only jobseekers own CVs, applications and notifications, only an adviser can be linked or decide, and a decision must name the owner's adviser. New CVs and applications must start as waiting or applied | CHECK rules (can't do this); app-only | You asked for roles enforced by the data | Triggers are hidden logic and harder for a beginner to read |
+| One waiting reminder per application | A partial unique index | App check | Makes a double run harmless | None found |
+| Adviser choice "once only" | The database blocks switching, but allows emptying the link (matches the old app; GUESS) | Block emptying too | The delete rule needs emptying | A direct database edit could empty it and re-choose. The app prevents this |
+| Rules left to the app | Future date, no move back to "applied", password rules, real Word/PDF content, hiding the phone | Triggers | Your answers | Skipped if someone bypasses the app |
+- `Automations`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Nudge timing | First due 7 days after the date applied. After each send, the next is due 7 days later. Editing the date applied doesn't move a waiting reminder | Count from when it was saved; send once (the old app) | Your repeat rule | An old application entered late nudges at once, and a ghosted one nudges every week with no cap |
+| Events done in app code, not by triggers | Marked GUESS | Database triggers | Matches the old app, easier to read | A change made directly in the database wouldn't create or cancel a reminder |
+| CV decision notification | Message names the CV and outcome, not the comment | Include the comment | Keeps personal text out of notifications | None found |
+| Digest | Created at the first hourly run on Monday from 8:00 Irish time, once per Monday, only for jobseekers with applications. Figures on a new /digest page | Catch up on later days | Your Monday 8:00 rule | If the computer is off all Monday, that week is skipped |
+| Tidy-up job (new, not asked for) | The hourly script deletes read notifications and sent or skipped reminders older than 90 days | No automatic deletion; other periods | Your data protection requirement needs a retention period | It deletes data by itself using numbers I invented, and the privacy page tells users "90 days" |
+| 30-day log and backup retention | Written in data-protection.md, but nothing enforces it | Add log rotation | I needed a period for the document | The document claims something the code doesn't do |
+| Scheduling | One script, tools/run_automations.py, every hour, taking the database path, printing counts as JSON, using a throwaway secret key | A scheduler library | Your option B | The cron and Task Scheduler steps are untested on a real machine |
+| Irish time | Python's zoneinfo for Europe/Dublin. Without tzdata (Windows) it silently uses UTC | Require tzdata | No new library | On Windows, the digest hour and "no future date" shift by an hour in summer |
+- `Who sees what, and how the app behaves`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Who can register as an adviser | Anyone, as in the old app. I didn't add a control | Invitation code; manual accounts; approval | I left it open (open point A) | A fake adviser chosen by a jobseeker could see that jobseeker's CVs and notes |
+| Choosing an adviser | Required at sign-up if advisers exist. Can be done later if none was chosen or the adviser left, and that choice is once only too | Always optional | Matches the old app | Low |
+| Advisers' own phone | Not collected | Optional | The old app hid it | Low |
+| CV rules | Several CVs per jobseeker. An adviser decides a waiting CV once. A comment on an approval is refused. Renaming doesn't reset the decision | Allow re-deciding; one current CV | Simplest fit with the data model | An adviser can't fix a mistaken decision |
+| Application form | Stage can't be chosen on a new application. After leaving "applied", that option disappears. Date picker stops at today | Show every stage | Enforces your "no move back" rule | None found |
+| Password details | Capital letter means A to Z only. Special means not a letter, digit or space | Count accented capitals | Your wording | An accented capital alone is refused |
+| Sign-up message | Now says "that email is already in use" (the old app was vague) | Vague message | The threat analysis says it's unavoidable | It reveals which emails have accounts |
+| Sessions and cookies | Kept the old settings: 8 hours, SameSite Lax, Secure by environment setting | Stricter | Not asked to change | None new |
+- `Error handling`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Rejected data | Roll back, show a mapped friendly message, never the raw database text. Unknown cases get a generic message | Show the raw message | Your AGENTS.md rule | Generic message is less helpful |
+| Error pages | Not yours, or missing, gives 404. Wrong role gives 403. An unsigned-in download gives 401. A second adviser choice gives 403 | Always 404 | Mostly the old app | 403 versus 404 can reveal which pages exist |
+- `Code, libraries and file location`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| get_connection(path=None) | One connection per web request inside the app, a new one for scripts and tests; foreign keys on, rows by column name, wait up to 5 seconds when locked | Default app.db in the project folder, or DATABASE_PATH as a fixed path with no waiting | One function everywhere, as your rules ask | app.db replaces the old default path |
+| Where SQL lives | Only in db.py and tools/migrate.py; functions take the owner or adviser id, so the check is in the query | SQL in routes | Safer and tested | db.py is long |
+| tools/migrate.py | I wrote it; it remembers applied files in a schema_migration table and runs each file as one script | The kit's tool; PRAGMA user_version | You didn't upload the kit's | A failure part-way leaves a half-built database |
+| Libraries | None added; requirements.txt unchanged; pytest not required | APScheduler | Your "no new libraries" habit | None
+Output location | pathway_v3/ and a zip in the outputs area; your original zip untouched | Editing your folder in place | Safe to compare | You must copy it over yourself |
+| Upload request limit | 1 MB plus 100,000 bytes, with an environment override | Exactly 1 MB | The form's own overhead needs room | Slightly bigger requests are accepted before the exact check |
+- `What I removed or rewrote`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Whole-app port | Rewrote app.py, utils.py, 7 route and automation modules and 12 templates, and added digest.html | Only the application routes | A partial port can't work | Large change, though 124 tests pass |
+| Features dropped | Failed sign-in limiting, run history, CV version history and separate review records, the awaiting-adviser column, the adviser notifications page, the init-db command, CVs on disk, the 5 MB limit, the block on advisers closing accounts, required phone, joined dates, the "Successful" card (now "Interviews") | Add tables for them | None of these tables are in your data model | Weaker sign-in protection, lost history, and no old data carried over |
+| Files not carried over | Old schema.sql, architecture.md, both diagrams, the old README and tests, .env, the live database, private_uploads | Keep them | They describe the old structure | You only have them in your original zip |
+| .gitignore | Rewrote it, fixing the leading space before *.db, and added *.log | Leave it | The old rule probably didn't work | None |
+| Privacy page | Rewrote the text to match data-protection.md | Leave it | The old text was out of date | It's a public statement built on my guessed numbers |
+- `Documents and tests`
+| Decision | What you chose | What else you could have chosen | Why you chose it | Risk if it is wrong |
+| Flow diagram, threat analysis, data protection | 9 flows, 4 trust boundaries, 2 data stores. Lawful basis "contract", you or your institution as controller, retention numbers as proposals | Different boundaries; consent | A first draft you could correct | Legal wording isn't checked |
+| Edits to your data-model.md | Replaced the "known differences" section and added a change-log row | Leave it | The old section described code that no longer exists | You didn't ask me to edit it |
+| AGENTS.md text | I drafted the wording and the reasons in rows 3 to 12, and reversed my earlier "no triggers" note | Your words | You asked how to update it | Reasons in your table aren't yours |
+| Tests | 124 tests in five files, including one raw-connection demo. They assert SQLite's wording. I broke rules on purpose in temporary copies to check the tests | Fewer tests | AGENTS.md requires constraint tests | Exact error wording could differ in another SQLite version |
+
+- **Which one to check first**
+Check who may register as an adviser. Everything else on this list either follows your answers, is easy to see in the app, or is low-stakes. This one decides whether the role protection protects anything. All the database rules and tests pass, but anyone can still register as an adviser.
+ ```
+
+- **What it produced:** table of decisions made by Claude.ai
+- **Decision:** Accepetd
+- **Why:** It is a list of decision made by Claude.ai to adapt the Flask app `pathway` to the database. Nothing to modify.
+- **What I checked:** none
+- **Commit:** `Store data in SQLite: db.py with foreign keys on, parameterised queries, constraint tests`
+
+---
 
 ## Worked example (from the club equipment loans demo in Session 5)
 
